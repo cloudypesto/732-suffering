@@ -15,7 +15,7 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 
 # ── Robot namespace and motion parameters ────────────────────────────────
-NAMESPACE = '/T14'           # Change to your robot e.g. /T10
+NAMESPACE = '/T12'           # Change to your robot e.g. /T10
 FORWARD_SPEED = 0.2          # m/s
 TARGET_DISTANCE = 1.0        # metres
 DRIVE_DURATION = TARGET_DISTANCE / FORWARD_SPEED   # seconds to travel target distance
@@ -109,7 +109,7 @@ class TestNode(Node):
             elapsed = now - self.phase_start_time
             if elapsed < DRIVE_DURATION:
                 self.drive(FORWARD_SPEED, 0.0)
-                # Print current relative heading for monitoring
+                # Print current relative heading for monitorings
                 # self.get_logger().info(f'Current heading (relative to start): {self.current_yaw:.2f} deg')
             else:
                 self.stop()

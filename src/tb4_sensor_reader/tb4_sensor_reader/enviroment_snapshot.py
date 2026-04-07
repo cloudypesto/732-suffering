@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
+"""
+Environment Snapshot Node
+COMPSYS732
+
+Subscribes to LiDAR scan and prints:
+- Total number of beams
+- Minimum valid range
+- Range straight ahead
+
+Runs continuously until Ctrl+C.
+"""
 
 import rclpy
+import math
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 
-# ── Set your robot namespace ─────────────────────────────────────────────
-NAMESPACE = '/T2'   # change to your robot
+# ── Set your robot namespace ────────────────────────────────────────────────
+NAMESPACE = '/T12'   # ← change this
 
 
 class EnvironmentSnapshot(Node):
@@ -13,36 +25,43 @@ class EnvironmentSnapshot(Node):
     def __init__(self):
         super().__init__('environment_snapshot')
 
-        self.subscription = self.create_subscription(
+        # ── Subscriber ──────────────────────────────────────────────────────
+        self.scan_sub = self.create_subscription(
             LaserScan,
             f'{NAMESPACE}/scan',
             self.scan_callback,
             10
         )
 
-        self.get_logger().info('Environment snapshot node running...')
+        self.get_logger().info('Environment snapshot node started')
 
+    # ── LiDAR callback ──────────────────────────────────────────────────────
     def scan_callback(self, msg):
-        ranges = msg.ranges
-        n_beams = len(ranges)
+        # Total number of beams
+        total_beams = len(msg.ranges)
 
-        # ── Minimum valid range ─────────────────────────────────────────
-        valid_ranges = [
-            r for r in ranges
-            if msg.range_min <= r <= msg.range_max
-        ]
+        # Valid ranges only
+        valid_ranges = [r for r in msg.ranges if msg.range_min <= r <= msg.range_max]
+
+        # Minimum valid range
         min_range = min(valid_ranges) if valid_ranges else float('inf')
+        max_range = max(valid_ranges) if valid_ranges else float('inf')
 
-        # ── Forward-facing beam (TurtleBot 4 orientation) ───────────────
-        forward_idx = (n_beams // 2) - (n_beams // 4)
-        forward_idx = forward_idx % n_beams
-        forward_range = ranges[forward_idx]
+        target_angle = -math.pi / 2   # +90 degrees (left)
 
-        # ── Print once per scan ─────────────────────────────────────────
-        print(
-            f"Beams: {n_beams} | "
-            f"Min: {min_range:.3f} m | "
-            f"Forward: {forward_range:.3f} m"
+        front_index = int((target_angle - msg.angle_min) / msg.angle_increment)
+
+        # Clamp index to valid bounds
+        front_index = max(0, min(front_index, total_beams - 1))
+
+        front_range = msg.ranges[front_index]
+
+        # Print once per scan
+        self.get_logger().info(
+            f'Beams: {total_beams} | '
+            f'Min range: {min_range:.3f} m | '
+            f'Max range: {max_range:.3f} m | '
+            f'Front range: {front_range:.3f} m'
         )
 
 
@@ -53,7 +72,7 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        print("\nStopped by user")
+        pass
     finally:
         node.destroy_node()
         rclpy.shutdown()

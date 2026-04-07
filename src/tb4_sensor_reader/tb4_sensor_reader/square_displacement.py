@@ -16,7 +16,7 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 
 # ── Parameters ─────────────────────────────────────────────
-NAMESPACE = '/T14'   # CHANGE THIS
+NAMESPACE = '/T12'   # CHANGE THIS
 
 FORWARD_SPEED = 0.2      # m/s
 TURN_SPEED = 0.5         # rad/s

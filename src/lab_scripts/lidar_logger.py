@@ -88,7 +88,7 @@ class LidarLogger(Node):
             # Forward beam: angle = 0 rad relative to robot front.
             # Compute index from angle_min and angle_increment.
             angle_increment = (msg.angle_max - msg.angle_min) / (n - 1)
-            target_angle = math.pi  # radians — robot forward (LiDAR 0° = robot rear on TurtleBot 4)
+            target_angle = -math.pi / 2  # radians — robot forward (LiDAR 0° = robot rear on TurtleBot 4)
             n = len(msg.ranges)
 
             # Shift from right → forward (add 90°)
