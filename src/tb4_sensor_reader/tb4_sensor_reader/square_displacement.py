@@ -15,8 +15,8 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 
-# ── Parameters ─────────────────────────────────────────────
-NAMESPACE = '/T12'   # CHANGE THIS
+# Parameters 
+NAMESPACE = '/T12'   # Update robot numeber
 
 FORWARD_SPEED = 0.2      # m/s
 TURN_SPEED = 0.5         # rad/s
@@ -59,7 +59,7 @@ class SquareDisplacement(Node):
 
         self.get_logger().info('Square Displacement Test Node started')
 
-    # ── Odometry callback ───────────────────────────────────
+    # Odometry callback 
     def odom_callback(self, msg):
         x = msg.pose.pose.position.x
         y = msg.pose.pose.position.y
@@ -85,7 +85,7 @@ class SquareDisplacement(Node):
         rel = (rel + 180) % 360 - 180
         self.current_yaw = rel
 
-    # ── Motion helpers ──────────────────────────────────────
+    # Motion helpers 
     def drive(self, linear, angular):
         msg = Twist()
         msg.linear.x = float(linear)
@@ -95,7 +95,7 @@ class SquareDisplacement(Node):
     def stop(self):
         self.drive(0.0, 0.0)
 
-    # ── Control loop ────────────────────────────────────────
+    # Control loop
     def control_loop(self):
 
         if self.test_done:
@@ -139,7 +139,7 @@ class SquareDisplacement(Node):
                     self.phase += 1
                     self.phase_start_time = None
 
-        # ── Phase 8: Evaluation ─────────────────────────────
+        # Phase 8: Evaluation 
         elif self.phase == 8:
 
             dx = self.local_x

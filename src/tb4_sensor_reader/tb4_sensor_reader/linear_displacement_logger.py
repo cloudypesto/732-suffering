@@ -14,8 +14,8 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 
-# ── Robot namespace and motion parameters ────────────────────────────────
-NAMESPACE = '/T12'           # Change to your robot e.g. /T10
+# Robot namespace and motion parameters 
+NAMESPACE = '/T12'           # e.g. /T10
 FORWARD_SPEED = 0.2          # m/s
 TARGET_DISTANCE = 1.0        # metres
 DRIVE_DURATION = TARGET_DISTANCE / FORWARD_SPEED   # seconds to travel target distance
@@ -53,7 +53,7 @@ class TestNode(Node):
 
         self.get_logger().info('Linear Displacement Test Node started')
 
-    # ── Odometry callback ────────────────────────────────────────────────────
+    # Odometry callback 
     def odom_callback(self, msg):
         # Raw position
         x = msg.pose.pose.position.x
@@ -81,7 +81,7 @@ class TestNode(Node):
         rel_yaw = (rel_yaw + 180) % 360 - 180   # normalize to [-180,180]
         self.current_yaw = rel_yaw
 
-    # ── Helper: publish velocity ──────────────────────────────────────────────
+    # Helper: publish velocity 
     def drive(self, linear, angular):
         msg = Twist()
         msg.linear.x = float(linear)
@@ -91,7 +91,7 @@ class TestNode(Node):
     def stop(self):
         self.drive(0.0, 0.0)
 
-    # ── Control loop ─────────────────────────────────────────────────────────
+    # Control loop 
     def control_loop(self):
         if self.test_done:
             self.stop()
@@ -99,7 +99,7 @@ class TestNode(Node):
 
         now = self.get_clock().now().nanoseconds / 1e9  # seconds
 
-        # Phase 0 — Drive forward for DRIVE_DURATION seconds
+        # Phase 0 - Drive forward for DRIVE_DURATION seconds
         if self.phase == 0:
             if self.phase_start_time is None:
                 self.phase_start_time = now
@@ -119,7 +119,7 @@ class TestNode(Node):
                 self.phase += 1
                 self.phase_start_time = None
 
-        # Phase 1 — Evaluate displacement and check pass/fail
+        # Phase 1 - Evaluate displacement and check pass/fail
         elif self.phase == 1:
             dx = self.local_x
             dy = self.local_y
@@ -127,7 +127,7 @@ class TestNode(Node):
 
             # Print in assignment-required format using get_logger().info()
             self.get_logger().info(f"{self.local_x:.6f}, {self.local_y:.6f}")  # final x, y
-            self.get_logger().info(f"{displacement:.6f}")                       # displacement
+            self.get_logger().info(f"{displacement:.6f}")                      # displacement
 
             self.test_done = True
 

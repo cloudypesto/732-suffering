@@ -16,7 +16,7 @@ import math
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 
-# ── Set your robot namespace ────────────────────────────────────────────────
+# Set your robot namespace
 NAMESPACE = '/T12'   # ← change this
 
 
@@ -25,7 +25,7 @@ class EnvironmentSnapshot(Node):
     def __init__(self):
         super().__init__('environment_snapshot')
 
-        # ── Subscriber ──────────────────────────────────────────────────────
+        # Subscriber 
         self.scan_sub = self.create_subscription(
             LaserScan,
             f'{NAMESPACE}/scan',
@@ -35,7 +35,7 @@ class EnvironmentSnapshot(Node):
 
         self.get_logger().info('Environment snapshot node started')
 
-    # ── LiDAR callback ──────────────────────────────────────────────────────
+    # LiDAR callback 
     def scan_callback(self, msg):
         # Total number of beams
         total_beams = len(msg.ranges)
