@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-A1 Odometry Logger (Fixed Frame + Final Displacement Only)
+A1 Odometry Logger (Clean + Consistent Frame)
 """
 
 import rclpy
@@ -30,9 +30,6 @@ class A1OdomLogger(Node):
         self.start_time = None
         self.recording = True
 
-        self.start_x = None
-        self.start_y = None
-
         topic = f"{self.namespace}/odom"
         self.subscription = self.create_subscription(
             Odometry, topic, self.odom_callback, 10
@@ -55,22 +52,22 @@ class A1OdomLogger(Node):
 
         pos = msg.pose.pose.position
 
-        # capture start reference ONCE
-        if self.start_x is None:
-            self.start_x = pos.x
-            self.start_y = pos.y
-
         self.data.append((elapsed, pos.x, pos.y))
 
+    # -----------------------------
+    # FIXED: consistent frame usage
+    # -----------------------------
     def compute_displacement(self):
-        """Final displacement only (A1 requirement)"""
         if len(self.data) < 2:
             return 0.0
 
-        sx, sy = self.data[0][1], self.data[0][2]
-        fx, fy = self.data[-1][1], self.data[-1][2]
+        x0 = self.data[0][1]
+        y0 = self.data[0][2]
 
-        return math.sqrt((fx - sx)**2 + (fy - sy)**2)
+        fx = self.data[-1][1] - x0
+        fy = self.data[-1][2] - y0
+
+        return math.sqrt(fx**2 + fy**2)
 
     def save_csv(self, path):
         displacement = self.compute_displacement()
@@ -86,7 +83,7 @@ class A1OdomLogger(Node):
         if not self.data:
             return
 
-        # 🔥 FIX: normalise to start at (0,0)
+        # normalise trajectory
         x0 = self.data[0][1]
         y0 = self.data[0][2]
 
@@ -96,12 +93,10 @@ class A1OdomLogger(Node):
         plt.figure(figsize=(6, 6))
 
         plt.plot(xs, ys, linewidth=2, label="Actual trajectory")
-
-        # start/end markers
         plt.scatter(xs[0], ys[0], label="Start")
         plt.scatter(xs[-1], ys[-1], label="End")
 
-        # ideal path (now same frame!)
+        # ideal path (same frame now)
         plt.plot([0, self.target], [0, 0], '--', label="Ideal path")
 
         plt.title("A1 Odometry Test (Normalised Frame)")
@@ -115,9 +110,6 @@ class A1OdomLogger(Node):
         plt.close()
 
         print(f"Plot saved → {path}")
-
-    def shutdown(self):
-        self.recording = False
 
 
 def main():

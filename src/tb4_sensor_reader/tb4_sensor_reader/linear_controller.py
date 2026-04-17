@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 
-NAMESPACE = '/T12'
+NAMESPACE = '/T6'
 FORWARD_SPEED = 0.2
 TARGET_DISTANCE = 1.0
 DRIVE_DURATION = TARGET_DISTANCE / FORWARD_SPEED
@@ -41,7 +41,6 @@ class A1TestNode(Node):
 
         now = self.get_clock().now().nanoseconds / 1e9
 
-    
         # PHASE 0 - Stabilisation
         if self.phase == 0:
             if self.phase_start_time is None:
@@ -54,13 +53,13 @@ class A1TestNode(Node):
                 self.phase = 1
                 self.phase_start_time = None
 
-
         # PHASE 1 - Drive forward
         elif self.phase == 1:
             if self.phase_start_time is None:
                 self.phase_start_time = now
                 self.get_logger().info(
-                    f"Driving forward for {DRIVE_DURATION:.2f} seconds")
+                    f"Driving forward for {DRIVE_DURATION:.2f} seconds"
+                )
 
             elapsed = now - self.phase_start_time
 
@@ -72,29 +71,30 @@ class A1TestNode(Node):
                 self.phase = 2
                 self.phase_start_time = None
 
-
-        # PHASE 2 - Final pause for odom to settle
+        # PHASE 2 - Final settle
         elif self.phase == 2:
             if self.phase_start_time is None:
                 self.phase_start_time = now
-                self.get_logger().info("Pausing before ending test...")
+                self.get_logger().info("Pausing before finishing test...")
 
             if now - self.phase_start_time < 2.0:
                 self.stop()
             else:
-                self.get_logger().info(
-                    "A1 test complete — check subscriber output")
+                self.stop()  # ensure safe stop before exit
+                self.get_logger().info("A1 test complete")
                 self.test_done = True
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = A1TestNode()
+
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         node.stop()
     finally:
+        node.stop()  
         node.destroy_node()
         rclpy.shutdown()
 
