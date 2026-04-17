@@ -25,7 +25,7 @@ setup(
         	'reactive_controller = tb4_sensor_reader.reactive_controller:main',
         	'avoid_controller = tb4_sensor_reader.avoid_controller:main',
         	'test_node = tb4_sensor_reader.test_node_template:main',
-        	'linear_displacement_logger = tb4_sensor_reader.linear_displacement_logger:main',
+        	'linear_displacement_logger = tb4_sensor_reader.linear_controller:main',
         	'square = tb4_sensor_reader.square_displacement:main',
             'snapshot = tb4_sensor_reader.enviroment_snapshot:main',
         ],
