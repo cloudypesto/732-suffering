@@ -1,46 +1,49 @@
 #!/usr/bin/env python3
 """
-A1 Odometry Logger (Clean + Consistent Frame)
+A1 Logger — Linear Odometry Test (Clean Version)
 """
+
+import argparse
+import csv
+import math
+import os
+import time
 
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
-import math
-import csv
-import os
-import time
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-class A1OdomLogger(Node):
+class A1Logger(Node):
 
-    def __init__(self, namespace, target, duration, trial):
-        super().__init__('a1_odom_logger')
+    def __init__(self, namespace, target, duration):
+        super().__init__('a1_logger')
 
         self.namespace = namespace.rstrip('/')
         self.target = target
         self.duration = duration
-        self.trial = trial
 
         self.data = []
-        self.start_time = None
+        self.start_time = time.time()
         self.recording = True
 
         topic = f"{self.namespace}/odom"
+
         self.subscription = self.create_subscription(
             Odometry, topic, self.odom_callback, 10
         )
 
-        print(f"\nA1 Logger running on {topic}")
-        print("Waiting for odometry...\n")
-
-        self.start_time = time.time()
+        print(f"\nA1 Logger started")
+        print(f"Topic: {topic}")
+        print(f"Target: {target} m")
+        print(f"Duration: {duration} s\n")
 
     def odom_callback(self, msg):
+
         if not self.recording:
             return
 
@@ -54,10 +57,11 @@ class A1OdomLogger(Node):
 
         self.data.append((elapsed, pos.x, pos.y))
 
-    # -----------------------------
-    # FIXED: consistent frame usage
-    # -----------------------------
+    # ----------------------------
+    # METRICS
+    # ----------------------------
     def compute_displacement(self):
+
         if len(self.data) < 2:
             return 0.0
 
@@ -69,21 +73,34 @@ class A1OdomLogger(Node):
 
         return math.sqrt(fx**2 + fy**2)
 
+    def compute_error(self):
+        return self.compute_displacement() - self.target
+
+    def compute_error_pct(self):
+        return abs(self.compute_error()) / self.target * 100.0
+
+    # ----------------------------
+    # CSV (ONLY FINAL RESULT)
+    # ----------------------------
     def save_csv(self, path):
-        displacement = self.compute_displacement()
+
+        disp = self.compute_displacement()
 
         with open(path, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(["trial", "displacement_m"])
-            writer.writerow([self.trial, round(displacement, 4)])
+            writer.writerow(["displacement_m"])
+            writer.writerow([round(disp, 4)])
 
-        print(f"Final displacement saved → {path}")
+        print(f"CSV saved → {path}")
 
+    # ----------------------------
+    # PLOT
+    # ----------------------------
     def plot(self, path):
+
         if not self.data:
             return
 
-        # normalise trajectory
         x0 = self.data[0][1]
         y0 = self.data[0][2]
 
@@ -96,10 +113,10 @@ class A1OdomLogger(Node):
         plt.scatter(xs[0], ys[0], label="Start")
         plt.scatter(xs[-1], ys[-1], label="End")
 
-        # ideal path (same frame now)
+        # ideal path
         plt.plot([0, self.target], [0, 0], '--', label="Ideal path")
 
-        plt.title("A1 Odometry Test (Normalised Frame)")
+        plt.title("A1 Odometry Test (Linear)")
         plt.xlabel("X (m)")
         plt.ylabel("Y (m)")
         plt.axis("equal")
@@ -112,28 +129,38 @@ class A1OdomLogger(Node):
         print(f"Plot saved → {path}")
 
 
+# ----------------------------
+# MAIN (SAFE EXIT)
+# ----------------------------
 def main():
+
+    parser = argparse.ArgumentParser(description="A1 Logger")
+    parser.add_argument('--namespace', required=True)
+    parser.add_argument('--target', type=float, default=1.0)
+    parser.add_argument('--duration', type=int, default=15)
+
+    args = parser.parse_args()
+
     rclpy.init()
 
-    namespace = "/T12"
-    target = 1.0
-    duration = 15
-    trial = 1
+    node = A1Logger(args.namespace, args.target, args.duration)
 
-    node = A1OdomLogger(namespace, target, duration, trial)
+    end_time = time.time() + args.duration + 3
 
     try:
-        while rclpy.ok() and node.recording:
+        while rclpy.ok() and time.time() < end_time:
             rclpy.spin_once(node, timeout_sec=0.05)
 
     except KeyboardInterrupt:
         pass
 
     finally:
+        node.recording = False
+
         base = os.path.expanduser("~")
 
-        csv_path = os.path.join(base, f"a1_trial_{trial}.csv")
-        plot_path = os.path.join(base, f"a1_trial_{trial}.png")
+        csv_path = os.path.join(base, "a1_displacement.csv")
+        plot_path = os.path.join(base, "a1_plot.png")
 
         node.save_csv(csv_path)
         node.plot(plot_path)
@@ -141,7 +168,7 @@ def main():
         node.destroy_node()
         rclpy.shutdown()
 
-        print("\nDone")
+        print("\nDONE")
         print("CSV:", csv_path)
         print("Plot:", plot_path)
 
