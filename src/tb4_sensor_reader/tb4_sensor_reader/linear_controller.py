@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 
-NAMESPACE = '/T6'
+NAMESPACE = '/T29'
 FORWARD_SPEED = 0.2
 TARGET_DISTANCE = 1.0
 DRIVE_DURATION = TARGET_DISTANCE / FORWARD_SPEED

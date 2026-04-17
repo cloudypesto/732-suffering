@@ -20,12 +20,13 @@ import matplotlib.pyplot as plt
 
 class A1Logger(Node):
 
-    def __init__(self, namespace, target, duration):
+    def __init__(self, namespace, target, duration, trial):
         super().__init__('a1_logger')
 
         self.namespace = namespace.rstrip('/')
         self.target = target
         self.duration = duration
+        self.trial = trial
 
         self.data = []
         self.start_time = time.time()
@@ -38,6 +39,7 @@ class A1Logger(Node):
         )
 
         print(f"\nA1 Logger started")
+        print(f"Trial: {trial}")
         print(f"Topic: {topic}")
         print(f"Target: {target} m")
         print(f"Duration: {duration} s\n")
@@ -54,7 +56,6 @@ class A1Logger(Node):
             return
 
         pos = msg.pose.pose.position
-
         self.data.append((elapsed, pos.x, pos.y))
 
     # ----------------------------
@@ -80,18 +81,28 @@ class A1Logger(Node):
         return abs(self.compute_error()) / self.target * 100.0
 
     # ----------------------------
-    # CSV (ONLY FINAL RESULT)
+    # CSV (APPEND ALL TRIALS)
     # ----------------------------
     def save_csv(self, path):
 
         disp = self.compute_displacement()
+        file_exists = os.path.isfile(path)
 
-        with open(path, 'w', newline='') as f:
+        with open(path, 'a', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(["displacement_m"])
-            writer.writerow([round(disp, 4)])
 
-        print(f"CSV saved → {path}")
+            if not file_exists:
+                writer.writerow(["trial", "displacement_m", "target_m", "error_m", "error_pct"])
+
+            writer.writerow([
+                self.trial,
+                round(disp, 4),
+                self.target,
+                round(self.compute_error(), 4),
+                round(self.compute_error_pct(), 2)
+            ])
+
+        print(f"CSV updated → {path}")
 
     # ----------------------------
     # PLOT
@@ -113,10 +124,9 @@ class A1Logger(Node):
         plt.scatter(xs[0], ys[0], label="Start")
         plt.scatter(xs[-1], ys[-1], label="End")
 
-        # ideal path
         plt.plot([0, self.target], [0, 0], '--', label="Ideal path")
 
-        plt.title("A1 Odometry Test (Linear)")
+        plt.title(f"A1 Odometry Test (Trial {self.trial})")
         plt.xlabel("X (m)")
         plt.ylabel("Y (m)")
         plt.axis("equal")
@@ -130,7 +140,7 @@ class A1Logger(Node):
 
 
 # ----------------------------
-# MAIN (SAFE EXIT)
+# MAIN
 # ----------------------------
 def main():
 
@@ -138,12 +148,18 @@ def main():
     parser.add_argument('--namespace', required=True)
     parser.add_argument('--target', type=float, default=1.0)
     parser.add_argument('--duration', type=int, default=15)
+    parser.add_argument('--trial', type=int, default=1)
 
     args = parser.parse_args()
 
     rclpy.init()
 
-    node = A1Logger(args.namespace, args.target, args.duration)
+    node = A1Logger(
+        args.namespace,
+        args.target,
+        args.duration,
+        args.trial
+    )
 
     end_time = time.time() + args.duration + 3
 
@@ -157,10 +173,13 @@ def main():
     finally:
         node.recording = False
 
+        disp = node.compute_displacement()
+        print(f"\nTrial {node.trial} Displacement: {disp:.4f} m\n")
+
         base = os.path.expanduser("~")
 
         csv_path = os.path.join(base, "a1_displacement.csv")
-        plot_path = os.path.join(base, "a1_plot.png")
+        plot_path = os.path.join(base, f"a1_plot_trial{node.trial}.png")
 
         node.save_csv(csv_path)
         node.plot(plot_path)
