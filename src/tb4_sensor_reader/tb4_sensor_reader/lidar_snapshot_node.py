@@ -50,7 +50,7 @@ class LidarSnapshot(Node):
         # Forward range (FIXED OFFSET)
         n = total_beams
 
-        # Based on your observation:
+        # Based on our observation:
         # midpoint = right → shift +90° to get forward
         forward_idx = (n // 2 + n // 4) % n
 
