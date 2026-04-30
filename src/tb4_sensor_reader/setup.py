@@ -28,6 +28,7 @@ setup(
         	'linear_displacement_logger = tb4_sensor_reader.linear_displacement_logger:main',
         	'square = tb4_sensor_reader.square_displacement:main',
             'snapshot = tb4_sensor_reader.enviroment_snapshot:main',
+            'pose_reader = tb4_sensor_reader.pose_reader:main', 
         ],
     },
 )
