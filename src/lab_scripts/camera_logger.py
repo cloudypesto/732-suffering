@@ -24,8 +24,8 @@ import numpy as np
 DETECTION_THRESHOLD = 500
 
 # HSV range for red (two ranges needed as red wraps around 0/180)
-RED_LOW1,  RED_HIGH1  = np.array([0,   120, 70]), np.array([10,  255, 255])
-RED_LOW2,  RED_HIGH2  = np.array([170, 120, 70]), np.array([180, 255, 255])
+RED_LOW1,  RED_HIGH1  = np.array([0,   160, 60]), np.array([10,  255, 255])
+RED_LOW2,  RED_HIGH2  = np.array([140, 160, 60]), np.array([180, 255, 255])
 
 
 class CameraLogger(Node):
